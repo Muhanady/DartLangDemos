@@ -1,0 +1,45 @@
+
+body {
+  background-color: #F8F8F8;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 1.2em;
+  margin: 15px;
+}
+
+h1, p {
+  color: #333;
+}
+
+#dropdownDiv
+{
+	background: #ff4242;
+	border:1px solid;
+	border-radius:5px;
+	box-shadow: 10px 10px 5px #888888;
+	width:150px;
+}
+#tableDiv
+{
+background:#ffc5ae;
+	border:1px solid;
+	border-radius:5px;
+	box-shadow: 10px 10px 5px #888888;
+	width:300px;	
+}
+
+table
+{
+  width : 300px;
+  height: 300px;
+
+}
+td
+{
+  width:50px;
+  height: 50px;
+  text-align: center;
+  font-size: large;
+  font-weight: bold;
+}
