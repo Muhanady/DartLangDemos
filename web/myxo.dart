@@ -1,7 +1,8 @@
 import 'dart:html';
 import 'dart:math' show Random;
-import 'dart:convert' show JSON;
+
 import 'dart:async' show Future;
+import '../lib/Possibilities.dart';
 
 
 
@@ -219,16 +220,5 @@ void mouseOutOfCell(MouseEvent e)
 }
 
 
-class WinPossibilities{
-  static  List<List<String>>  possibilitiesList = [];
-  static Future readPossibilitiesFromJson()
-  {
-    return HttpRequest.getString('possibilities.json').then(_parsePossibilities);
-  }
-  static _parsePossibilities(String sJson)
-  {
-    var possibilities = JSON.decode(sJson);
-    possibilitiesList = possibilities['p'];
-  }
-}
+
 //{"A_1","B_1","C_1"},{"A_2","B_2","C_2"},{"A_3","B_3","C_3"},{"A_1","A_2","A_3"},{"B_1","B_2","B_3"},{"C_1","C_2","C_3"},{"A_1","B_2","C_3"},{"C_1","B_2","A_3"}]}
