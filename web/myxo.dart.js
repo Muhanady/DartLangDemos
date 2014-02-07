@@ -440,6 +440,19 @@ var $$ = {};
     toString$0: function(receiver) {
       return H.IterableMixinWorkaround_toStringIterable(receiver, "[", "]");
     },
+    toList$1$growable: function(receiver, growable) {
+      var t1;
+      if (growable)
+        return H.setRuntimeTypeInfo(receiver.slice(), [H.getTypeArgumentByIndex(receiver, 0)]);
+      else {
+        t1 = H.setRuntimeTypeInfo(receiver.slice(), [H.getTypeArgumentByIndex(receiver, 0)]);
+        t1.fixed$length = init;
+        return t1;
+      }
+    },
+    toList$0: function($receiver) {
+      return this.toList$1$growable($receiver, true);
+    },
     get$iterator: function(receiver) {
       return new H.ListIterator(receiver, receiver.length, 0, null);
     },
@@ -578,6 +591,35 @@ var $$ = {};
     substring$1: function($receiver, startIndex) {
       return this.substring$2($receiver, startIndex, null);
     },
+    trim$0: function(receiver) {
+      var endIndex, startIndex, codeUnit, endIndex0, endIndex1;
+      for (endIndex = receiver.length, startIndex = 0; startIndex < endIndex;) {
+        if (startIndex >= endIndex)
+          H.throwExpression(P.RangeError$value(startIndex));
+        codeUnit = receiver.charCodeAt(startIndex);
+        if (codeUnit === 32 || codeUnit === 13 || J.JSString__isWhitespace(codeUnit))
+          ++startIndex;
+        else
+          break;
+      }
+      if (startIndex === endIndex)
+        return "";
+      for (endIndex0 = endIndex; true; endIndex0 = endIndex1) {
+        endIndex1 = endIndex0 - 1;
+        if (endIndex1 < 0)
+          H.throwExpression(P.RangeError$value(endIndex1));
+        if (endIndex1 >= endIndex)
+          H.throwExpression(P.RangeError$value(endIndex1));
+        codeUnit = receiver.charCodeAt(endIndex1);
+        if (codeUnit === 32 || codeUnit === 13 || J.JSString__isWhitespace(codeUnit))
+          ;
+        else
+          break;
+      }
+      if (startIndex === 0 && endIndex0 === endIndex)
+        return receiver;
+      return receiver.substring(startIndex, endIndex0);
+    },
     get$isEmpty: function(receiver) {
       return receiver.length === 0;
     },
@@ -605,7 +647,47 @@ var $$ = {};
         throw H.wrapException(P.RangeError$value(index));
       return receiver[index];
     },
-    $isString: true
+    $isString: true,
+    static: {JSString__isWhitespace: function(codeUnit) {
+        if (codeUnit < 256)
+          switch (codeUnit) {
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 32:
+            case 133:
+            case 160:
+              return true;
+            default:
+              return false;
+          }
+        switch (codeUnit) {
+          case 5760:
+          case 6158:
+          case 8192:
+          case 8193:
+          case 8194:
+          case 8195:
+          case 8196:
+          case 8197:
+          case 8198:
+          case 8199:
+          case 8200:
+          case 8201:
+          case 8202:
+          case 8232:
+          case 8233:
+          case 8239:
+          case 8287:
+          case 12288:
+          case 65279:
+            return true;
+          default:
+            return false;
+        }
+      }}
   }
 }],
 ["_isolate_helper", "dart:_isolate_helper", , H, {
@@ -1272,7 +1354,7 @@ var $$ = {};
       return ["list", id, this._serializeList$1(list)];
     },
     visitMap$1: function(map) {
-      var t1, copyId, id, keys;
+      var t1, copyId, id;
       t1 = this._visited;
       copyId = t1.$index(t1, map);
       if (copyId != null)
@@ -1281,10 +1363,7 @@ var $$ = {};
       this._nextFreeRefId = id + 1;
       t1 = this._visited;
       t1.$indexSet(t1, map, id);
-      t1 = map.get$keys();
-      keys = this._serializeList$1(P.List_List$from(t1, true, H.getRuntimeTypeArgument(t1, "IterableBase", 0)));
-      t1 = map.get$values(map);
-      return ["map", id, keys, this._serializeList$1(P.List_List$from(t1, true, H.getRuntimeTypeArgument(t1, "IterableBase", 0)))];
+      return ["map", id, this._serializeList$1(J.toList$0$ax(map.get$keys())), this._serializeList$1(J.toList$0$ax(map.get$values(map)))];
     },
     _serializeList$1: function(list) {
       var t1, len, result, i, t2;
@@ -4880,8 +4959,15 @@ var $$ = {};
       }
     },
     add$1: function(_, element) {
-      var nums, rest, hash, bucket;
-      if ((element & 0x3ffffff) === element) {
+      var strings, nums, rest, hash, bucket;
+      if (typeof element === "string" && element !== "__proto__") {
+        strings = this._strings;
+        if (strings == null) {
+          strings = P._LinkedHashSet__newHashTable();
+          this._strings = strings;
+        }
+        return this._addHashTableEntry$2(strings, element);
+      } else if (typeof element === "number" && (element & 0x3ffffff) === element) {
         nums = this._nums;
         if (nums == null) {
           nums = P._LinkedHashSet__newHashTable();
@@ -4987,6 +5073,33 @@ var $$ = {};
       var t1;
       for (t1 = this.get$iterator(this); t1.moveNext$0();)
         f.call$1(t1.get$current());
+    },
+    join$1: function(_, separator) {
+      var iterator, buffer, t1;
+      iterator = this.get$iterator(this);
+      if (!iterator.moveNext$0())
+        return "";
+      buffer = P.StringBuffer$("");
+      if (separator === "")
+        do {
+          t1 = H.S(iterator.get$current());
+          buffer._contents = buffer._contents + t1;
+        } while (iterator.moveNext$0());
+      else {
+        buffer.write$1(H.S(iterator.get$current()));
+        for (; iterator.moveNext$0();) {
+          buffer._contents = buffer._contents + separator;
+          t1 = H.S(iterator.get$current());
+          buffer._contents = buffer._contents + t1;
+        }
+      }
+      return buffer._contents;
+    },
+    toList$1$growable: function(_, growable) {
+      return P.List_List$from(this, growable, H.getRuntimeTypeArgument(this, "IterableBase", 0));
+    },
+    toList$0: function($receiver) {
+      return this.toList$1$growable($receiver, true);
     },
     get$length: function(_) {
       var it, count;
@@ -5735,6 +5848,9 @@ var $$ = {};
     get$children: function(receiver) {
       return new W._ChildrenElementList(receiver, receiver.children);
     },
+    get$classes: function(receiver) {
+      return new W._ElementCssClassSet(receiver);
+    },
     toString$0: function(receiver) {
       return receiver.localName;
     },
@@ -5970,6 +6086,32 @@ var $$ = {};
     $isEventTarget: true,
     "%": "DOMWindow|Window"
   },
+  _NamedNodeMap: {
+    "": "Interceptor_ListMixin_ImmutableListMixin1;",
+    get$length: function(receiver) {
+      return receiver.length;
+    },
+    $index: function(receiver, index) {
+      var t1 = receiver.length;
+      if (index >>> 0 !== index || index >= t1)
+        throw H.wrapException(P.RangeError$range(index, 0, t1));
+      return receiver[index];
+    },
+    $indexSet: function(receiver, index, value) {
+      throw H.wrapException(P.UnsupportedError$("Cannot assign element of immutable List."));
+    },
+    elementAt$1: function(receiver, index) {
+      if (index < 0 || index >= receiver.length)
+        return H.ioore(receiver, index);
+      return receiver[index];
+    },
+    $isList: true,
+    $asList: function() {
+      return [W.Node];
+    },
+    $isJavaScriptIndexingBehavior: true,
+    "%": "MozNamedAttrMap|NamedNodeMap"
+  },
   _ChildrenElementList: {
     "": "ListBase;_element,_childElements",
     get$length: function(_) {
@@ -6084,6 +6226,37 @@ var $$ = {};
       return [W.Node];
     }
   },
+  Interceptor_ListMixin1: {
+    "": "Interceptor+ListMixin;",
+    $isList: true,
+    $asList: function() {
+      return [W.Node];
+    }
+  },
+  Interceptor_ListMixin_ImmutableListMixin1: {
+    "": "Interceptor_ListMixin1+ImmutableListMixin;",
+    $isList: true,
+    $asList: function() {
+      return [W.Node];
+    }
+  },
+  _ElementCssClassSet: {
+    "": "CssClassSetImpl;_element",
+    readClasses$0: function() {
+      var s, t1, trimmed;
+      s = P.LinkedHashSet_LinkedHashSet(null, null, null, J.JSString);
+      for (t1 = this._element.className.split(" "), t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+        trimmed = J.trim$0$s(t1._current);
+        if (trimmed.length !== 0)
+          s.add$1(s, trimmed);
+      }
+      return s;
+    },
+    writeClasses$1: function(s) {
+      P.List_List$from(s, true, null);
+      this._element.className = s.join$1(s, " ");
+    }
+  },
   EventStreamProvider: {
     "": "Object;_eventType"
   },
@@ -6186,6 +6359,11 @@ var $$ = {};
   },
   SvgElement: {
     "": "Element;",
+    get$classes: function(receiver) {
+      if (receiver._cssClassSet == null)
+        receiver._cssClassSet = new P._AttributeClassSet(receiver);
+      return receiver._cssClassSet;
+    },
     get$children: function(receiver) {
       return H.setRuntimeTypeInfo(new P.FilteredElementList(receiver, new W._ChildNodeListLazy(receiver)), [W.Element]);
     },
@@ -6193,6 +6371,25 @@ var $$ = {};
       throw H.wrapException(P.UnsupportedError$("Cannot invoke click SVG."));
     },
     "%": "SVGAltGlyphDefElement|SVGAltGlyphItemElement|SVGAnimateColorElement|SVGAnimateElement|SVGAnimateMotionElement|SVGAnimateTransformElement|SVGAnimationElement|SVGComponentTransferFunctionElement|SVGCursorElement|SVGDescElement|SVGFEBlendElement|SVGFEColorMatrixElement|SVGFEComponentTransferElement|SVGFECompositeElement|SVGFEConvolveMatrixElement|SVGFEDiffuseLightingElement|SVGFEDisplacementMapElement|SVGFEDistantLightElement|SVGFEDropShadowElement|SVGFEFloodElement|SVGFEFuncAElement|SVGFEFuncBElement|SVGFEFuncGElement|SVGFEFuncRElement|SVGFEGaussianBlurElement|SVGFEImageElement|SVGFEMergeElement|SVGFEMergeNodeElement|SVGFEMorphologyElement|SVGFEOffsetElement|SVGFEPointLightElement|SVGFESpecularLightingElement|SVGFESpotLightElement|SVGFETileElement|SVGFETurbulenceElement|SVGFilterElement|SVGFontElement|SVGFontFaceElement|SVGFontFaceFormatElement|SVGFontFaceNameElement|SVGFontFaceSrcElement|SVGFontFaceUriElement|SVGGlyphElement|SVGGlyphRefElement|SVGGradientElement|SVGHKernElement|SVGLinearGradientElement|SVGMPathElement|SVGMarkerElement|SVGMaskElement|SVGMetadataElement|SVGMissingGlyphElement|SVGPatternElement|SVGRadialGradientElement|SVGScriptElement|SVGSetElement|SVGStopElement|SVGSymbolElement|SVGTitleElement|SVGVKernElement|SVGViewElement;SVGElement"
+  },
+  _AttributeClassSet: {
+    "": "CssClassSetImpl;_svg$_element",
+    readClasses$0: function() {
+      var classname, s, t1, trimmed;
+      classname = this._svg$_element.getAttribute("class");
+      s = P.LinkedHashSet_LinkedHashSet(null, null, null, J.JSString);
+      if (classname == null)
+        return s;
+      for (t1 = classname.split(" "), t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+        trimmed = J.trim$0$s(t1._current);
+        if (trimmed.length !== 0)
+          s.add$1(s, trimmed);
+      }
+      return s;
+    },
+    writeClasses$1: function(s) {
+      this._svg$_element.setAttribute("class", s.join$1(s, " "));
+    }
   }
 }],
 ["dart.math", "dart:math", , P, {
@@ -6292,6 +6489,44 @@ var $$ = {};
 }],
 ["html_common", "dart:html_common", , P, {
   "": "",
+  CssClassSetImpl: {
+    "": "Object;",
+    toString$0: function(_) {
+      var t1 = this.readClasses$0();
+      return t1.join$1(t1, " ");
+    },
+    get$iterator: function(_) {
+      var t1, t2;
+      t1 = this.readClasses$0();
+      t2 = new P.LinkedHashSetIterator(t1, t1._modifications, null, null);
+      t2._cell = t1._first;
+      return t2;
+    },
+    forEach$1: function(_, f) {
+      var t1 = this.readClasses$0();
+      t1.forEach$1(t1, f);
+    },
+    get$length: function(_) {
+      return this.readClasses$0()._collection$_length;
+    },
+    lookup$1: function(value) {
+      var t1 = this.readClasses$0();
+      return t1.contains$1(t1, value) ? value : null;
+    },
+    add$1: function(_, value) {
+      var s, ret;
+      s = this.readClasses$0();
+      ret = new P.CssClassSetImpl_add_closure(value).call$1(s);
+      this.writeClasses$1(s);
+      return ret;
+    }
+  },
+  CssClassSetImpl_add_closure: {
+    "": "Closure:12;value_0",
+    call$1: function(s) {
+      return s.add$1(s, this.value_0);
+    }
+  },
   FilteredElementList: {
     "": "ListBase;_node,_childNodes",
     get$_filtered: function() {
@@ -6379,10 +6614,14 @@ var $$ = {};
             return H.ioore(t1, t2);
           myCell = t1[t2];
           myCell.textContent = J.toString$0(J.get$value$x($.dropdown)) === "X" ? "O" : "X";
+          t1 = J.get$classes$x(myCell);
+          t1.add$1(t1, "Clicked");
           C.JSArray_methods.remove$1($.get$boardCellIist(), myCell);
         } else {
           t1 = document.querySelector("#B_2");
           t1.textContent = J.toString$0(J.get$value$x($.dropdown)) === "X" ? "O" : "X";
+          t1 = J.get$classes$x(document.querySelector("#B_2"));
+          t1.add$1(t1, "Clicked");
           C.JSArray_methods.remove$1($.get$boardCellIist(), document.querySelector("#B_2"));
         }
         return;
@@ -6391,20 +6630,20 @@ var $$ = {};
     }
   }, "call$1", "getClickedCell$closure", 2, 0, 9],
   checkAndPlay: function() {
-    var emptyCell, t1, playToWin, playToDefend, winP, t2, myCounter, opCounter, mainCounter, t3, cell, t4, stopLoop, cellList, count, cellToUse, myCell;
+    var emptyCell, t1, playToWin, playToDefend, winP, t2, t3, myCounter, opCounter, mainCounter, t4, cell, t5, stopLoop, cellList, count, cellToUse, myCell;
     emptyCell = [];
     for (t1 = J.get$iterator$ax($.get$WinPossibilities_possibilitiesList()), playToWin = false, playToDefend = false; t1.moveNext$0();) {
       winP = t1.get$current();
-      for (t2 = J.get$iterator$ax(winP), myCounter = 0, opCounter = 0, mainCounter = 0; t2.moveNext$0();) {
-        t3 = C.JSString_methods.$add("#", t2.get$current());
-        cell = document.querySelector(t3);
-        t3 = cell.textContent;
-        t4 = J.get$value$x($.dropdown);
-        if (t3 == null ? t4 == null : t3 === t4) {
+      for (t2 = J.getInterceptor$ax(winP), t3 = t2.get$iterator(winP), myCounter = 0, opCounter = 0, mainCounter = 0; t3.moveNext$0();) {
+        t4 = C.JSString_methods.$add("#", t3.get$current());
+        cell = document.querySelector(t4);
+        t4 = cell.textContent;
+        t5 = J.get$value$x($.dropdown);
+        if (t4 == null ? t5 == null : t4 === t5) {
           ++opCounter;
           ++mainCounter;
           C.JSArray_methods.remove$1($.get$boardCellIist(), cell);
-        } else if (t3 !== "") {
+        } else if (t4 !== "") {
           ++myCounter;
           ++mainCounter;
           C.JSArray_methods.remove$1($.get$boardCellIist(), cell);
@@ -6418,6 +6657,10 @@ var $$ = {};
         playToDefend = true;
       }
       if (opCounter === 3) {
+        for (t1 = t2.get$iterator(winP); t1.moveNext$0();) {
+          t2 = C.JSString_methods.$add("#", t1.get$current());
+          document.querySelector(t2).className = "Clicked Success";
+        }
         Q.declareTheWinner("You WIN!");
         return;
       }
@@ -6456,6 +6699,8 @@ var $$ = {};
                 if (playToWin)
                   continue;
                 cellToUse.textContent = J.toString$0(J.get$value$x($.dropdown)) === "X" ? "O" : "X";
+                t3 = J.get$classes$x(cellToUse);
+                t3.add$1(t3, "Clicked");
                 C.JSArray_methods.remove$1($.get$boardCellIist(), cellToUse);
                 stopLoop = true;
                 continue;
@@ -6470,6 +6715,8 @@ var $$ = {};
           if (!stopLoop)
             for (t2 = J.get$iterator$ax(cellList), stopLoop = false, count = 0, cellToUse = null; t2.moveNext$0();) {
               cell = t2.get$current();
+              t3 = C.JSString_methods.$add("#", cell);
+              document.querySelector(t3).className = "Clicked Success";
               t3 = C.JSString_methods.$add("#", cell);
               t3 = document.querySelector(t3).textContent;
               t4 = J.get$value$x($.dropdown);
@@ -6495,6 +6742,8 @@ var $$ = {};
               }
               if (count === 3) {
                 cellToUse.textContent = J.toString$0(J.get$value$x($.dropdown)) === "X" ? "O" : "X";
+                t3 = J.get$classes$x(cellToUse);
+                t3.add$1(t3, "Clicked");
                 C.JSArray_methods.remove$1($.get$boardCellIist(), cellToUse);
                 Q.declareTheWinner("MYXO WIN!");
                 stopLoop = true;
@@ -6513,6 +6762,8 @@ var $$ = {};
           return H.ioore(t1, t2);
         myCell = t1[t2];
         myCell.textContent = J.toString$0(J.get$value$x($.dropdown)) === "X" ? "O" : "X";
+        t1 = J.get$classes$x(myCell);
+        t1.add$1(t1, "Clicked");
         C.JSArray_methods.remove$1($.get$boardCellIist(), myCell);
       } else
         Q.declareTheWinner("Game with draw :)");
@@ -6725,6 +6976,9 @@ J.forEach$1$ax = function(receiver, a0) {
 J.get$children$x = function(receiver) {
   return J.getInterceptor$x(receiver).get$children(receiver);
 };
+J.get$classes$x = function(receiver) {
+  return J.getInterceptor$x(receiver).get$classes(receiver);
+};
 J.get$error$x = function(receiver) {
   return J.getInterceptor$x(receiver).get$error(receiver);
 };
@@ -6764,8 +7018,14 @@ J.set$disabled$x = function(receiver, value) {
 J.set$href$x = function(receiver, value) {
   return J.getInterceptor$x(receiver).set$href(receiver, value);
 };
+J.toList$0$ax = function(receiver) {
+  return J.getInterceptor$ax(receiver).toList$0(receiver);
+};
 J.toString$0 = function(receiver) {
   return J.getInterceptor(receiver).toString$0(receiver);
+};
+J.trim$0$s = function(receiver) {
+  return J.getInterceptor$s(receiver).trim$0(receiver);
 };
 C.C_DynamicRuntimeType = new H.DynamicRuntimeType();
 C.C_JsonCodec = new P.JsonCodec();

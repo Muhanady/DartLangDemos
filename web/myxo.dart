@@ -48,11 +48,13 @@ void getClickedCell(MouseEvent e)
           {
             var myCell = boardCellIist[indexGen.nextInt(boardCellIist.length)];
             myCell.text=dropdown.value.toString() == 'X' ? 'O' : 'X';
+            myCell.classes.add('Clicked');
             boardCellIist.remove(myCell);
           }
           else
           {
             querySelector('#B_2').text = dropdown.value.toString() == 'X' ? 'O' : 'X';
+            querySelector('#B_2').classes.add('Clicked');
             boardCellIist.remove(querySelector('#B_2'));
           }
           return;
@@ -105,6 +107,10 @@ void checkAndPlay()
       }
       if(opCounter == 3)
       {
+        for(var aa in winP)
+        {
+          querySelector('#'+aa).className='Clicked Success';
+        }
         declareTheWinner('You WIN!');
          stopLoop = true;
          return;
@@ -142,6 +148,7 @@ void checkAndPlay()
               continue;
             }
             cellToUse.text = dropdown.value.toString() == 'X' ? 'O' : 'X';
+            cellToUse.classes.add('Clicked');
             boardCellIist.remove(cellToUse);
             stopLoop=true;
             continue;
@@ -160,9 +167,10 @@ void checkAndPlay()
           var cellToUse;
           for(var cell in cellList)
           {
+            querySelector('#'+cell).className='Clicked Success';
             if(querySelector('#'+cell).text != dropdown.value && querySelector('#'+cell).text != '')
             {
-              count++;
+               count++;
             }
             if(querySelector('#'+cell).text != dropdown.value && querySelector('#'+cell).text == '')
             {
@@ -172,6 +180,7 @@ void checkAndPlay()
             if(count == 3)
             {
               cellToUse.text = dropdown.value.toString() == 'X' ? 'O' : 'X';
+              cellToUse.classes.add('Clicked');
               boardCellIist.remove(cellToUse);
               declareTheWinner('MYXO WIN!');
               stopLoop = true;
@@ -190,6 +199,7 @@ void checkAndPlay()
     {
         var myCell = boardCellIist[indexGen.nextInt(boardCellIist.length)];
         myCell.text=dropdown.value.toString() == 'X' ? 'O' : 'X';
+        myCell.classes.add('Clicked');
         boardCellIist.remove(myCell);
     }
     else
@@ -206,6 +216,7 @@ void declareTheWinner(String s)
     ..text ='Play!'
     ..onClick.listen((e){window.location.reload();});
   div.children.add(okLink);
+
   AnchorElement a = querySelector('#linkelement');
   a.click();
 
