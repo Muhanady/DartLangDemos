@@ -16,8 +16,8 @@ SelectElement dropdown;
 final aMap= new Map<String,List<int>>();
 void main() {
   mTable= querySelector("#main_table")
-      ..onClick.listen(getClickedCell)
-      ..onMouseOver.listen(mouseOverCell);
+      ..onClick.listen(getClickedCell);
+     // ..onMouseOver.listen(mouseOverCell);
   dropdown = querySelector('#dropdown');
   fillBoard();
   WinPossibilities.readPossibilitiesFromJson().then((_){}).catchError((error){ print('error in parssing Json');});
@@ -105,8 +105,7 @@ void checkAndPlay()
       }
       if(opCounter == 3)
       {
-         window.alert('You WIN!');
-         window.location.reload();
+        declareTheWinner('You WIN!');
          stopLoop = true;
          return;
       }
@@ -144,7 +143,6 @@ void checkAndPlay()
             }
             cellToUse.text = dropdown.value.toString() == 'X' ? 'O' : 'X';
             boardCellIist.remove(cellToUse);
-
             stopLoop=true;
             continue;
           }
@@ -175,8 +173,7 @@ void checkAndPlay()
             {
               cellToUse.text = dropdown.value.toString() == 'X' ? 'O' : 'X';
               boardCellIist.remove(cellToUse);
-              window.alert('MYXO WIN!');
-              window.location.reload();
+              declareTheWinner('MYXO WIN!');
               stopLoop = true;
               continue;
             }
@@ -191,33 +188,29 @@ void checkAndPlay()
    // check if OP when
     if(boardCellIist.length>0)
     {
-
         var myCell = boardCellIist[indexGen.nextInt(boardCellIist.length)];
         myCell.text=dropdown.value.toString() == 'X' ? 'O' : 'X';
         boardCellIist.remove(myCell);
-
     }
     else
     {
-        window.alert('Game with draw :)');
-        window.location.reload();
+      declareTheWinner('Game with draw :)');
     }
   }
 }
+void declareTheWinner(String s)
+{
+  DivElement div =querySelector('#animation')
+      ..text = s;
+  AnchorElement okLink= new AnchorElement(href: '#1')
+    ..text ='Play!'
+    ..onClick.listen((e){window.location.reload();});
+  div.children.add(okLink);
+  AnchorElement a = querySelector('#linkelement');
+  a.click();
 
-void mouseOverCell(MouseEvent e)
-{
-    element = e.target as Element;
-    if(element.tagName=='TD')
-    {
-      element.style.backgroundColor='LightGreen';
-      element.onMouseOut.listen(mouseOutOfCell);
-    }
 }
-void mouseOutOfCell(MouseEvent e)
-{
-  element.style.backgroundColor = '';
-}
+
 
 
 
